@@ -1,0 +1,55 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+      <meta charset="utf-8" />
+      <title> Card Game </title>
+      <link href="/static/cards.css" type="text/css" rel="stylesheet" />
+      <link href="/static/bootstrap/css/bootstrap.min.css" type="text/css" rel="stylesheet"/>
+      <link href="/static/bootstrap/css/bootstrap-responsive.min.css"/>
+      <script type="text/javascript" src="/_ah/channel/jsapi"></script>
+      <script src="/static/jquery-1.11.0.min.js"></script>
+      <script src="/static/cards.js"></script>
+      <script src="/static/bootstrap/js/bootstrap.min.js "></script>
+      <link rel="stylesheet" type="text/css"/>
+        <style type="text/css"></style>
+        <script type='text/javascript'></script>
+        <script type='text/javascript'></script>
+      
+    </head>
+    <body >
+      <input type="text" hidden='true' value="{{ player_id }}" id="player-id">
+      
+		    		
+		</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="playerNames" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="myModalLabel">Player Names</h4>
+      </div>
+      <div class="modal-body">
+        <label>Player 1 Name<label><input type="text"  id="input-player-1" value="Player1" /><span id="player1-name-error"><span>
+        <label>Player 2 Name<label><input type="text"  id="input-player-2" value="Player2" /><span id="player2-name-error"><span>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="save-player-names">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+          <script>
+          channel = new goog.appengine.Channel('{{ token }}');
+    socket = channel.open();
+    socket.onopen = onOpened;
+    socket.onmessage = onMessage;
+    socket.onerror = onError;
+    socket.onclose = onClose;
+      </script>
+    </body>
+</html>

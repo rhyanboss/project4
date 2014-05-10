@@ -1,17 +1,46 @@
 $(document).ready(function(){
-	// $('.card').click(function(){
- //        $(this).find('.faces').addClass('flipped').mouseleave(function(){
- //            $(this).removeClass('flipped');
- //        });
- //        return false;
- //    });
 	game =  new Game();
- 	game.setUp();
-	game.addPlayer("Player 1");
+ 	game.build($("#game-area"));
+	game.addPlayer($("#player-id").val());
 	game.start();
+	$("#network-player").click(function(){
+		game.addNetworkPlayer("player-1","Player 1");
+	});
+  $("#side-bar .player").click(function(){
+    alert("Game Request");
+    sendGameRequest($(this).find(".username").html());
+  });
+  $("#accept-request").click(function(){
+    playerName = $("#game-request .username").html();
+    sendEvent("accept-request",playerName);
+  });
+  $("#reject-request").click(function(){
+    playerName = $("#game-request .username").html();
+    sendEvent("reject-request",playerName);
+  });
+  msg = null;
 });
 	
+sendGameRequest = function(userName){
+  sendEvent("request",userName);
+}
 
+sendEvent = function(eventType,playerName,other){
+  msg = Object({
+      "sender": game.controller.name,
+      "receiver":playerName,
+      "type": eventType
+  });
+  if(other){
+    $.extend(msg,other);
+  }
+  gameMessage("event",msg);
+}
+receiveGameRequest = function(playerName){
+  requestHtml = $("#game-request");
+  requestHtml.find(".username").html(playerName);
+  requestHtml.modal("show");
+}
 function Card(rank, suit,html){
 	this.rank = rank;
 	this.suit = suit;
@@ -45,8 +74,8 @@ function Card(rank, suit,html){
 		
 	}
 	this.getHtml = function(){
-		frontHtml = $("<div class='face front'>").html(this.rank).append(this.suit);
-		backHtml = $("<div class='face back'>");
+		frontHtml = $("<div class='face front'>");
+		backHtml = $("<div class='face back'>").html(this.rank).append(this.suit);
 		facesHtml = $("<div class='faces'>").html(frontHtml).append(backHtml);
 		html = $("<div class='card' id='"+this.card_id+"'>").html(facesHtml);
 		return html;
@@ -81,8 +110,13 @@ function Board(rows,columns,deck){
 		return this._randomDeck;		
 	}
 
-	this.build = function(element){
-		deck = this.randomCards();
+	this.build = function(element,board_deck){
+    if (board_deck){
+      deck = board_deck;
+    }else{
+      deck = this.randomCards();
+    }
+		
 		console.log(deck);
 		for(d=0;d<deck.length;d++){
 			card = deck[d];
@@ -100,20 +134,19 @@ function Board(rows,columns,deck){
 		html = this.getHtml();
 		element.append(html);
 		for(c=0;c<deck.length;c++){
-			card = deck[c];
+			card = this.deck[c];
 			card.card_id = "card-"+c;
 			console.log(card.getHtml());
 			html.append(card.getHtml());
 			card.animate();
+      
 		}
 		console.log(html.get(0));
-		
-		
 	}
 	
 	this.getHtml = function(){
 		if(!this.html){
-			this.html = $("<div class='board'>").css("width",(columns*200)+"px").css("height",(rows*200)+"px");
+			this.html = $("<div class='board'>");
 		}
 		return this.html;
 	}
@@ -225,12 +258,14 @@ function Game(){
 		"single":"single",
 		"double":"double"
 	};
+  this.controller = null;
 	this.mode = MODES.single;
 	this.players = [];//list of players
 	this.turn = null;//stores whoes turn it is
 	this.html = null;
 	this.timeout=null;
-	this.turnMax=1;
+	this.turnMax=24;
+	this.container = null;
 	this.updateTurn = function(game){
 		board.getHtml().on("turnEnded",function(){
 			
@@ -269,15 +304,20 @@ function Game(){
 			}
 			modesHtml.find("[value="+this.mode+"]").attr("selected","selected");
 			playersHtml = $("<div id='game-players'>");
-      netPlayers = $("<div id='network-players'>");
+      // netPlayers = $("<div id='network-players'>");
 			gameHtml = $("<div id='game' >");
-      gameHtml.append(netPlayers);
-			gameHtml.append(modesHtml);
-			gameHtml.append(playersHtml);
+			var controls = $("<div id='game-controls'>");
+			turnHtml = $("<h1 id='game-info'>").append(modesHtml);
+      turnHtml.append("<span id='game-turn'>");
+      // gameHtml.append(netPlayers);
+			// gameHtml.append(modesHtml);
+			// gameHtml.append(playersHtml);
+			controls.append(playersHtml);
+			gameHtml.append(controls);
+      gameHtml.append(turnHtml);
      
 			this.html = gameHtml;
-			turnHtml = $("<h1 id='game-turn'>");
-			gameHtml.append(turnHtml);
+			
 		}
 		return this.html;
 	}
@@ -285,10 +325,14 @@ function Game(){
 		deck = new Deck();
 		board = new Board(4,4,deck);
 		gameHtml = this.getHtml();
-		$("body").append(gameHtml);
+		this.container.append(gameHtml);
 		board.build(gameHtml);
 		this.listen();
 		
+	}
+	this.build = function(container){
+		this.container = container;
+		this.setUp();
 	}
 	this.start = function(){
 		this.turn = this.players[0];
@@ -308,7 +352,6 @@ function Game(){
 		this.mode = mode;
 		if (mode == MODES.network){
 			this.restoreSingle();
-			gameMessage(board.deck);
 		}
 		else if(mode == MODES.single){
 			this.restoreSingle();
@@ -336,6 +379,9 @@ function Game(){
 	}
 	this.addPlayer = function(playerName){
 		player = new Player(playerName);
+    if(this.players.length==0){
+      this.controller=player;
+    }
 		this.players.push(player);
 		this.displayPlayer(player);
 	}
@@ -386,8 +432,10 @@ function Game(){
 		return player.name;1
 	}
   this.addNetworkPlayer =function(playerId,playerName){
-    playerHtml = $("<div class='network-player' id='player"+playerId+"'>").html(playerName);
-    this.getHtml().find("#network-players").append(playerHtml);
+	player = new Player(playerName);
+    /*playerHtml = $("<div class='network-player' id='player"+playerId+"'>").html(playerName);
+    this.getHtml().find("#network-players").append(playerHtml);*/
+	$("#network-players").append(player.getHtml());
   }
 }
 function Player(name){
@@ -397,10 +445,13 @@ function Player(name){
 	this.turns = 0;
 	this.getHtml = function(){
 		if(!this.html){
-			var name = $("<div class='player-name'>").html("Name: "+this.name);
-			var score = $("<div class='player-score'>").html("Score: "+this.score);
-			var turn = $("<div class='player-turn'>").html("Turns: "+this.turns);
-			this.html = $("<div class='player' id='player-"+player.name+"'>").html(name).append(score).append(turn);
+			var player = $('<span class="player">').addClass("available");
+	        var picture =  $('<img class="picture">').attr("src","/static/player3.jpg");
+	        var name= $('<span class="username">').html(this.name);
+	        var score = $('<span class="score">').html(this.score);
+	        var turn = $("<div class='player-turn'>").html("Turns: "+this.turns);
+	        player.append(picture).append(name).append(score);
+	        this.html = player;
 		}
 		return this.html;
 	}
@@ -414,28 +465,45 @@ function Player(name){
 	}
 		
 }   
-gameMessage = function(msg){
-   msg= JSON.stringify(msg);
-  $.post("/",{"data":msg});
+gameMessage = function(name,msg){
+  game_msg = {};
+  game_msg[name]=JSON.stringify(msg);
+  $.post("/event",game_msg);
 }
 
 onOpened = function(){
-  message={"player_id":$("#player-id").val()};
-  gameMessage(message);
 }
 
 onMessage = function(message){
  data = eval("("+message.data+")");
-  console.log("Got The Message");
-  console.log(data);
-  $.each(data,function(key,value){
-    console.log(key);
-    if(key=="addNetWorkPlayer"){
-      console.log("add");
-      game.addNetworkPlayer(value.id,value.name);
-      
+ msg = JSON.parse(message.data);
+  console.log(msg);
+ event = msg.event;
+ if(event){
+   if(event.type=="request"){
+     receiveGameRequest(event.sender);
+   }
+   else if (event.type=="reject-request"){
+    requestResponse = $("#game-request-rejected");
+     requestResponse.find(".username").html(event.sender);
+    requestResponse.modal("show");
+     
+   }
+     else if (event.type=="accept-request"){
+      requestResponse= $("#game-request-accepted");
+      requestResponse.find(".username").html(event.sender);
+      requestResponse.modal("show");
+       game.changeMode("network");
+       sendEvent("start-game",event.sender,Object({"deck":board.deck}));
     }
-  });
+    else if (event.type=="start-game"){
+      board.deck = event.deck;
+      board.build($("#game-area"));
+      alert("display")
+    }
+ }
+
+
   
 }
 onError = function(e){

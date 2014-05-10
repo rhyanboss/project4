@@ -1,55 +1,131 @@
-
 <!DOCTYPE html>
 <html>
     <head>
       <meta charset="utf-8" />
       <title> Card Game </title>
       <link href="/static/cards.css" type="text/css" rel="stylesheet" />
-      <link href="/static/bootstrap/css/bootstrap.min.css" type="text/css" rel="stylesheet"/>
-      <link href="/static/bootstrap/css/bootstrap-responsive.min.css"/>
+      <link href='http://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet' type='text/css'>
+      <link href="/static/site.css" type="text/css" rel="stylesheet" />
+      <link href="/static/bootstrap.min.css" type="text/css" rel="stylesheet"/>
       <script type="text/javascript" src="/_ah/channel/jsapi"></script>
       <script src="/static/jquery-1.11.0.min.js"></script>
+      <script src="/static/bootstrap.min.js "></script>
       <script src="/static/cards.js"></script>
-      <script src="/static/bootstrap/js/bootstrap.min.js "></script>
-      <link rel="stylesheet" type="text/css"/>
-        <style type="text/css"></style>
-        <script type='text/javascript'></script>
-        <script type='text/javascript'></script>
+      <script src="/static/site.js"></script>
       
     </head>
     <body >
-      <input type="text" hidden='true' value="{{ player_id }}" id="player-id">
-      
-		    		
-		</div>
-
-
-<!-- Modal -->
-<div class="modal fade" id="playerNames" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    	<input type="text" hidden='true' value="{{ player_id }}" id="player-id">
+    	<header>
+    		<span id="site-name" class="selected">MEMRy</span>
+    	</header>
+    	<div id="site-content" >
+    		<div id="side-bar" class="site-panel">
+    			<div id="leader-board">
+            <div class="side-bar-title">
+              Players
+            </div>
+            <div id="leaders">
+              {% for player in players %}
+              <span class="player available" id="{{player.name}}" >
+                  <img src="/static/player3.jpg" class="picture"> 
+                <span class="username">{{player.name}}</span>
+                <span class="score">{{player.score}}</span>
+                {% if player.rank %}
+                  <span class="rank">{{player.rank}}</span>
+                {% endif %}
+                </span>
+              {% endfor %}
+                <!--<span class="player available" id="player-1" >
+                  <img src="/static/player3.jpg" class="picture"> 
+                  <span class="username">Sarah</span>
+                  <span class="score">25</span>
+                  <span class="rank">1</span>
+                </span>
+                  <span class="player busy" id="player-1" >
+                    <img src="/static/player4.jpg" class="picture"> 
+                  <span class="username">Sarah</span>
+                  <span class="score">25</span>
+                  <span class="rank">2</span>
+                </span>
+                  <span class="player away" id="player-1" >
+                    <img src="/static/player3.jpg" class="picture"> 
+                  <span class="username">Sarah</span>
+                  <span class="score">25</span>
+                  <span class="rank">3</span>
+                </span>
+                  <span class="player offline" id="player-1" >
+                    <img src="/static/player4.jpg" class="picture"> 
+                  <span class="username">Sarah</span>
+                  <span class="score">25</span>
+                  <span class="rank">4</span>
+                </span>-->
+            </div>
+            <div >
+            </div>
+    			</div>
+    			<div id="network-players">
+    			</div>
+    		</div>
+    		<div id="game-area" class="site-panel">
+    		</div>
+    	</div>
+        <script>
+        	channel = new goog.appengine.Channel('{{ token }}');
+  		    socket = channel.open();
+  		    socket.onopen = onOpened;
+  		    socket.onmessage = onMessage;
+  		    socket.onerror = onError;
+  		    socket.onclose = onClose;
+      </script>
+  <div id="game-request" class="modal fade">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h4 class="modal-title" id="myModalLabel">Player Names</h4>
+        <h4 class="modal-title">Game Request</h4>
       </div>
       <div class="modal-body">
-        <label>Player 1 Name<label><input type="text"  id="input-player-1" value="Player1" /><span id="player1-name-error"><span>
-        <label>Player 2 Name<label><input type="text"  id="input-player-2" value="Player2" /><span id="player2-name-error"><span>
+        <span class="username"></span> wants to play!
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" id="save-player-names">Save changes</button>
+        <button type="button" class="btn btn-danger" data-dismiss="modal" id="reject-request">Reject</button>
+        <button type="button" class="btn btn-success" id="accept-request" data-dismiss="modal">Accept</button>
       </div>
-    </div>
-  </div>
-</div>
-          <script>
-          channel = new goog.appengine.Channel('{{ token }}');
-    socket = channel.open();
-    socket.onopen = onOpened;
-    socket.onmessage = onMessage;
-    socket.onerror = onError;
-    socket.onclose = onClose;
-      </script>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+      <div id="game-request-rejected" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Game Request</h4>
+      </div>
+      <div class="modal-body">
+        <span class="username"></span> is Busy.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+      <div id="game-request-accepted" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Game Request</h4>
+      </div>
+      <div class="modal-body">
+        <span class="username"></span> wants to Play too!
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
     </body>
 </html>

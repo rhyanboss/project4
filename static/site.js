@@ -1,0 +1,17 @@
+$(document).ready(function(){
+	$("#site-name").click(function(){
+    if($(this).hasClass("selected")){
+      $(this).removeClass("selected");
+      $("#side-bar").css("position","relative");
+      $("#game-area").css("position","relative");
+      $("#side-bar").animate({bottom:"110%"},function(){
+        $("#game-area").animate({width:"50%",right:"11%"});      
+      });      
+    }else{
+      $(this).addClass("selected");
+      $("#game-area").animate({width:"40%",right:"0%"},function(){
+        $("#side-bar").animate({bottom:"0%"});
+      });
+    }
+	});
+});
